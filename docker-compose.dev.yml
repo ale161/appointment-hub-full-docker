@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # Development Database
+  database:
+    image: postgres:15-alpine
+    container_name: appointment-hub-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: appointment_hub_dev
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - appointment-dev-network
+
+  # Development Redis
+  redis:
+    image: redis:7-alpine
+    container_name: appointment-hub-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - appointment-dev-network
+
+  # Development Backend with hot reload
+  backend:
+    build:
+      context: ./appointment-hub-backend
+      dockerfile: Dockerfile.dev
+    container_name: appointment-hub-backend-dev
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://dev_user:dev_password@database:5432/appointment_hub_dev
+      FLASK_ENV: development
+      FLASK_DEBUG: 1
+      SECRET_KEY: dev-secret-key
+      JWT_SECRET_KEY: dev-jwt-secret-key
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./appointment-hub-backend/src:/app/src
+      - backend_dev_uploads:/app/uploads
+    ports:
+      - "5001:5000"
+    depends_on:
+      - database
+      - redis
+    networks:
+      - appointment-dev-network
+
+  # Development Frontend with hot reload
+  frontend:
+    build:
+      context: ./appointment-hub-frontend
+      dockerfile: Dockerfile.dev
+    container_name: appointment-hub-frontend-dev
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://localhost:5001/api
+    volumes:
+      - ./appointment-hub-frontend/src:/app/src
+      - ./appointment-hub-frontend/public:/app/public
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - appointment-dev-network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  backend_dev_uploads:
+    driver: local
+
+networks:
+  appointment-dev-network:
+    driver: bridge
+

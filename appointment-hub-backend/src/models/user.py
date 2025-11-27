@@ -58,10 +58,10 @@ class User(db.Model):
 
     @staticmethod
     def hash_password(password):
-        import bcrypt
-        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        from werkzeug.security import generate_password_hash
+        return generate_password_hash(password)
     
     def check_password(self, password):
-        import bcrypt
-        return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+        from werkzeug.security import check_password_hash
+        return check_password_hash(self.password_hash, password)
 

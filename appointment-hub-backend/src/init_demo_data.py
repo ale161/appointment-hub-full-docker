@@ -2,11 +2,10 @@
 Initialize demo data for the appointment management system
 """
 
-from models.user import User
+from models.user import User, UserRole
 from models.store import Store
 from models.service import Service
 from models.subscription import SubscriptionPlan, Subscription
-from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 
 def init_demo_data(db):
@@ -47,35 +46,29 @@ def init_demo_data(db):
     # Create demo users
     admin_user = User(
         email='admin@demo.com',
-        password_hash=generate_password_hash('password123'),
+        password_hash=User.hash_password('password123'),
         first_name='Admin',
         last_name='User',
-        role='admin',
-        phone_number='+30 123 456 7890',
-        is_active=True,
-        email_verified=True
+        role=UserRole.ADMIN,
+        phone_number='+30 123 456 7890'
     )
     
     manager_user = User(
         email='manager@demo.com',
-        password_hash=generate_password_hash('password123'),
+        password_hash=User.hash_password('password123'),
         first_name='Store',
         last_name='Manager',
-        role='store_manager',
-        phone_number='+30 123 456 7891',
-        is_active=True,
-        email_verified=True
+        role=UserRole.STORE_MANAGER,
+        phone_number='+30 123 456 7891'
     )
     
     client_user = User(
         email='client@demo.com',
-        password_hash=generate_password_hash('password123'),
+        password_hash=User.hash_password('password123'),
         first_name='John',
         last_name='Client',
-        role='client',
-        phone_number='+30 123 456 7892',
-        is_active=True,
-        email_verified=True
+        role=UserRole.CLIENT,
+        phone_number='+30 123 456 7892'
     )
     
     db.session.add_all([admin_user, manager_user, client_user])

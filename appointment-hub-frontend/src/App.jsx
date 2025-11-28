@@ -23,6 +23,7 @@ import StoreManagementPage from '@/pages/StoreManagementPage'
 import SubscriptionPage from '@/pages/SubscriptionPage'
 import ProfilePage from '@/pages/ProfilePage'
 import AdminPage from '@/pages/AdminPage'
+import AnalyticsPage from '@/pages/AnalyticsPage'
 
 // Components
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -57,6 +58,7 @@ function App() {
                 <Route path="store" element={<StoreManagementPage />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
                 <Route path="profile" element={<ProfilePage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="admin" element={
                   <ProtectedRoute requiredRole="admin">
                     <AdminPage />

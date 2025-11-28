@@ -567,7 +567,7 @@ const DashboardPage = () => {
                   </Button>
                   
                   <Button variant="outline" className="justify-start h-auto p-4" asChild>
-                    <Link to="/dashboard/store">
+                    <Link to="/dashboard/analytics">
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
                           <BarChart3 className="h-4 w-4 text-green-600 dark:text-green-300" />

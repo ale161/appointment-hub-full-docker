@@ -24,7 +24,8 @@ import {
   LogOut,
   Bell,
   Search,
-  Shield
+  Shield,
+  BarChart3
 } from 'lucide-react'
 
 const Layout = () => {
@@ -41,6 +42,7 @@ const Layout = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['admin', 'store_manager', 'client'] },
     { name: 'Bookings', href: '/dashboard/bookings', icon: Calendar, roles: ['admin', 'store_manager', 'client'] },
+    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, roles: ['admin', 'store_manager', 'client'] },
     { name: 'Services', href: '/dashboard/services', icon: Settings, roles: ['admin', 'store_manager'] },
     { name: 'Store Management', href: '/dashboard/store', icon: Store, roles: ['admin', 'store_manager'] },
     { name: 'Subscription', href: '/dashboard/subscription', icon: CreditCard, roles: ['admin', 'store_manager'] },

@@ -5,7 +5,7 @@ Initialize demo data for the appointment management system
 from src.models.user import User, UserRole
 from src.models.store import Store
 from src.models.service import Service
-from src.models.subscription import SubscriptionPlan, Subscription
+from src.models.subscription import SubscriptionPlan, Subscription, SubscriptionInterval
 from datetime import datetime, timedelta
 
 def init_demo_data(db):
@@ -18,25 +18,22 @@ def init_demo_data(db):
     # Create subscription plans
     starter_plan = SubscriptionPlan(
         name='Starter',
-        price=29.00,
-        billing_cycle='monthly',
-        max_bookings=100,
+        price_amount=29.00,
+        interval=SubscriptionInterval.MONTH,
         features=['Basic calendar integration', 'Email notifications', 'Standard support']
     )
-    
+
     professional_plan = SubscriptionPlan(
         name='Professional',
-        price=79.00,
-        billing_cycle='monthly',
-        max_bookings=-1,  # Unlimited
+        price_amount=79.00,
+        interval=SubscriptionInterval.MONTH,
         features=['Advanced calendar sync', 'SMS + Email notifications', 'Payment processing', 'Priority support', 'Custom branding']
     )
-    
+
     enterprise_plan = SubscriptionPlan(
         name='Enterprise',
-        price=199.00,
-        billing_cycle='monthly',
-        max_bookings=-1,  # Unlimited
+        price_amount=199.00,
+        interval=SubscriptionInterval.MONTH,
         features=['Everything in Professional', 'Multi-location support', 'Advanced analytics', 'API access', 'Dedicated support', 'Custom integrations']
     )
     

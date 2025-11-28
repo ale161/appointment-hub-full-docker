@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   // API base URL
-  const API_BASE_URL = 'https://mzhyi8cne9je.manus.space/api'
+  const API_BASE_URL = 'http://localhost:5001/api'
 
   useEffect(() => {
     if (token) {

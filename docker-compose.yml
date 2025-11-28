@@ -75,7 +75,7 @@ services:
     volumes:
       - backend_uploads:/app/uploads
     ports:
-      - "5000:5000"
+      - "5001:5000"
     depends_on:
       database:
         condition: service_healthy
@@ -98,7 +98,7 @@ services:
     container_name: appointment-hub-frontend
     restart: unless-stopped
     environment:
-      REACT_APP_API_URL: http://localhost:5000/api
+      REACT_APP_API_URL: http://localhost:5001/api
     ports:
       - "80:80"
       - "443:443"

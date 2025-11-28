@@ -30,6 +30,7 @@ RUN pip install --no-cache-dir gunicorn psycopg2-binary
 # Copy application code
 COPY src/ ./src/
 COPY create_demo_data.py .
+COPY init_demo_data.py .
 
 # Create directory for SQLite database
 RUN mkdir -p src/database

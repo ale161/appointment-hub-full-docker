@@ -23,6 +23,7 @@ import {
 import { Link } from 'react-router-dom'
 import dashboardService from '@/services/dashboardService'
 import NotificationCenter from '@/components/NotificationCenter'
+import UpcomingAppointments from '@/components/UpcomingAppointments'
 
 const DashboardPage = () => {
   const { user, isAdmin, isStoreManager, isClient } = useAuth()
@@ -633,10 +634,11 @@ const DashboardPage = () => {
         </Card>
       </div>
 
-      {/* Notification Center - Full width for all users */}
-      {(isStoreManager() || isAdmin() || isClient()) && (
+      {/* Upcoming Appointments and Notifications Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <UpcomingAppointments limit={5} />
         <NotificationCenter />
-      )}
+      </div>
 
       {/* Welcome Message for New Users */}
       {user && !user.last_login && (

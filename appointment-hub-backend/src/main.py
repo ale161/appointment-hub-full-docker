@@ -23,6 +23,7 @@ from src.routes.booking import booking_bp
 from src.routes.payment import payment_bp
 from src.routes.subscription import subscription_bp
 from src.routes.notification import notification_bp
+from src.routes.dashboard import dashboard_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 
@@ -60,6 +61,7 @@ app.register_blueprint(booking_bp, url_prefix='/api')
 app.register_blueprint(payment_bp, url_prefix='/api')
 app.register_blueprint(subscription_bp, url_prefix='/api')
 app.register_blueprint(notification_bp, url_prefix='/api')
+app.register_blueprint(dashboard_bp, url_prefix='/api')
 
 # Create database tables
 with app.app_context():

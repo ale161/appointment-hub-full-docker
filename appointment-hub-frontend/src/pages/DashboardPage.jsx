@@ -9,93 +9,56 @@ import {
   Clock, 
   Users, 
   TrendingUp, 
+  TrendingDown,
   Euro,
   CheckCircle,
   AlertCircle,
   Plus,
   ArrowRight,
-  BarChart3
+  BarChart3,
+  Store as StoreIcon,
+  DollarSign,
+  Activity
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import dashboardService from '@/services/dashboardService'
 
 const DashboardPage = () => {
   const { user, isAdmin, isStoreManager, isClient } = useAuth()
   const [dashboardData, setDashboardData] = useState({
     stats: {},
     recentBookings: [],
-    upcomingAppointments: [],
-    loading: true
+    popularServices: [],
+    topStores: [],
+    loading: true,
+    error: null
   })
+  const [timeRange, setTimeRange] = useState(30)
 
   useEffect(() => {
     fetchDashboardData()
-  }, [])
+  }, [timeRange])
 
   const fetchDashboardData = async () => {
     try {
-      // This would be replaced with actual API calls
-      // For now, using mock data
-      setTimeout(() => {
-        setDashboardData({
-          stats: {
-            totalBookings: 156,
-            todayBookings: 8,
-            revenue: 2450,
-            customers: 89
-          },
-          recentBookings: [
-            {
-              id: 1,
-              clientName: 'Sarah Johnson',
-              serviceName: 'Hair Cut & Style',
-              date: '2024-01-25',
-              time: '10:00',
-              status: 'confirmed',
-              amount: 65
-            },
-            {
-              id: 2,
-              clientName: 'Mike Chen',
-              serviceName: 'Consultation',
-              date: '2024-01-25',
-              time: '14:30',
-              status: 'pending',
-              amount: 45
-            },
-            {
-              id: 3,
-              clientName: 'Emma Davis',
-              serviceName: 'Massage Therapy',
-              date: '2024-01-24',
-              time: '16:00',
-              status: 'completed',
-              amount: 80
-            }
-          ],
-          upcomingAppointments: [
-            {
-              id: 1,
-              serviceName: 'Hair Cut',
-              storeName: 'Bella Salon',
-              date: '2024-01-26',
-              time: '11:00',
-              status: 'confirmed'
-            },
-            {
-              id: 2,
-              serviceName: 'Massage',
-              storeName: 'Wellness Center',
-              date: '2024-01-28',
-              time: '15:30',
-              status: 'pending'
-            }
-          ],
-          loading: false
-        })
-      }, 1000)
+      setDashboardData(prev => ({ ...prev, loading: true, error: null }))
+      const stats = await dashboardService.getStats(timeRange)
+      
+      setDashboardData({
+        stats: stats,
+        recentBookings: stats.recentBookings || [],
+        popularServices: stats.popularServices || [],
+        topStores: stats.topStores || [],
+        loading: false,
+        error: null
+      })
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
-      setDashboardData(prev => ({ ...prev, loading: false }))
+      setDashboardData(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: error.message || 'Failed to load dashboard data'
+      }))
     }
   }
 
@@ -121,6 +84,21 @@ const DashboardPage = () => {
     return 'Good evening'
   }
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(amount)
+  }
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
   if (dashboardData.loading) {
     return (
       <div className="space-y-6">
@@ -136,19 +114,40 @@ const DashboardPage = () => {
     )
   }
 
+  if (dashboardData.error) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <CardTitle className="text-red-800">Error Loading Dashboard</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-red-700 mb-4">{dashboardData.error}</p>
+            <Button onClick={fetchDashboardData} variant="outline">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {getGreeting()}, {user?.first_name}!
+            {getGreeting()}, {user?.first_name || 'User'}!
           </h1>
           <p className="text-muted-foreground mt-1">
             Here's what's happening with your {isClient() ? 'appointments' : 'business'} today.
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 flex items-center space-x-2">
           {isStoreManager() && (
             <Button asChild>
               <Link to="/dashboard/bookings">
@@ -168,8 +167,8 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Stats Cards - Only for Store Managers and Admins */}
-      {(isStoreManager() || isAdmin()) && (
+      {/* Stats Cards - Store Manager View */}
+      {isStoreManager() && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -177,9 +176,20 @@ const DashboardPage = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardData.stats.totalBookings}</div>
-              <p className="text-xs text-muted-foreground">
-                +12% from last month
+              <div className="text-2xl font-bold">{dashboardData.stats.totalBookings || 0}</div>
+              <p className="text-xs text-muted-foreground flex items-center mt-1">
+                {dashboardData.stats.bookingChange >= 0 ? (
+                  <>
+                    <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+                    <span className="text-green-600">+{dashboardData.stats.bookingChange}%</span>
+                  </>
+                ) : (
+                  <>
+                    <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
+                    <span className="text-red-600">{dashboardData.stats.bookingChange}%</span>
+                  </>
+                )}
+                <span className="ml-1">from last month</span>
               </p>
             </CardContent>
           </Card>
@@ -190,35 +200,154 @@ const DashboardPage = () => {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardData.stats.todayBookings}</div>
+              <div className="text-2xl font-bold">{dashboardData.stats.todayBookings || 0}</div>
               <p className="text-xs text-muted-foreground">
-                3 confirmed, 2 pending
+                {dashboardData.stats.todayConfirmed || 0} confirmed, {dashboardData.stats.todayPending || 0} pending
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
               <Euro className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€{dashboardData.stats.revenue}</div>
-              <p className="text-xs text-muted-foreground">
-                +8% from last month
+              <div className="text-2xl font-bold">
+                {formatCurrency(dashboardData.stats.revenue || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center mt-1">
+                {dashboardData.stats.revenueChange >= 0 ? (
+                  <>
+                    <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+                    <span className="text-green-600">+{dashboardData.stats.revenueChange}%</span>
+                  </>
+                ) : (
+                  <>
+                    <TrendingDown className="h-3 w-3 mr-1 text-red-600" />
+                    <span className="text-red-600">{dashboardData.stats.revenueChange}%</span>
+                  </>
+                )}
+                <span className="ml-1">from last month</span>
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Customers</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardData.stats.customers}</div>
+              <div className="text-2xl font-bold">{dashboardData.stats.customers || 0}</div>
               <p className="text-xs text-muted-foreground">
-                +5 new this week
+                +{dashboardData.stats.newCustomersWeek || 0} new this week
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Stats Cards - Client View */}
+      {isClient() && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardData.stats.totalBookings || 0}</div>
+              <p className="text-xs text-muted-foreground">All time bookings</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardData.stats.upcomingBookings || 0}</div>
+              <p className="text-xs text-muted-foreground">Scheduled appointments</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completed</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardData.stats.completedBookings || 0}</div>
+              <p className="text-xs text-muted-foreground">Finished services</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {formatCurrency(dashboardData.stats.totalSpent || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">Lifetime spending</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Stats Cards - Admin View */}
+      {isAdmin() && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Stores</CardTitle>
+              <StoreIcon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardData.stats.totalStores || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {dashboardData.stats.activeStores || 0} active
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardData.stats.totalBookings || 0}</div>
+              <p className="text-xs text-muted-foreground">Across all stores</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <Euro className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {formatCurrency(dashboardData.stats.totalRevenue || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">Platform-wide</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardData.stats.totalUsers || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {dashboardData.stats.totalClients || 0} clients, {dashboardData.stats.totalManagers || 0} managers
               </p>
             </CardContent>
           </Card>
@@ -227,7 +356,7 @@ const DashboardPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Bookings - For Store Managers and Admins */}
-        {(isStoreManager() || isAdmin()) && (
+        {(isStoreManager() || isAdmin()) && dashboardData.recentBookings.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -247,28 +376,30 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dashboardData.recentBookings.map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {dashboardData.recentBookings.slice(0, 5).map((booking) => (
+                  <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-10 w-10">
                         <AvatarFallback>
-                          {booking.clientName.split(' ').map(n => n[0]).join('')}
+                          {booking.client?.first_name?.[0]}{booking.client?.last_name?.[0]}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">{booking.clientName}</p>
-                        <p className="text-sm text-muted-foreground">{booking.serviceName}</p>
+                        <p className="text-sm font-medium">
+                          {booking.client?.first_name} {booking.client?.last_name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{booking.service?.name}</p>
                       </div>
                     </div>
                     <div className="text-right space-y-1">
                       <div className="text-sm">
-                        {booking.date} at {booking.time}
+                        {formatDate(booking.booking_date)} at {booking.start_time}
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-end space-x-2">
                         <Badge className={getStatusColor(booking.status)}>
                           {booking.status}
                         </Badge>
-                        <span className="text-sm font-medium">€{booking.amount}</span>
+                        <span className="text-sm font-medium">{formatCurrency(booking.total_amount)}</span>
                       </div>
                     </div>
                   </div>
@@ -278,15 +409,99 @@ const DashboardPage = () => {
           </Card>
         )}
 
-        {/* Upcoming Appointments - For Clients */}
-        {isClient() && (
+        {/* Popular Services - For Store Managers */}
+        {isStoreManager() && dashboardData.popularServices.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Upcoming Appointments</CardTitle>
+                  <CardTitle>Popular Services</CardTitle>
                   <CardDescription>
-                    Your scheduled appointments
+                    Most booked services
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/dashboard/services">
+                    View All
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {dashboardData.popularServices.map((service, index) => (
+                  <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-lg font-bold text-primary">#{index + 1}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{service.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {service.bookingCount} bookings
+                        </p>
+                      </div>
+                    </div>
+                    <Activity className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Top Stores - For Admin */}
+        {isAdmin() && dashboardData.topStores.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Top Stores by Revenue</CardTitle>
+                  <CardDescription>
+                    Best performing stores
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/dashboard/stores">
+                    View All
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {dashboardData.topStores.map((store, index) => (
+                  <div key={store.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-lg font-bold text-primary">#{index + 1}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{store.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatCurrency(store.revenue)}
+                        </p>
+                      </div>
+                    </div>
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recent Bookings - For Clients */}
+        {isClient() && dashboardData.recentBookings.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Recent Appointments</CardTitle>
+                  <CardDescription>
+                    Your booking history
                   </CardDescription>
                 </div>
                 <Button variant="outline" size="sm" asChild>
@@ -299,23 +514,23 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dashboardData.upcomingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {dashboardData.recentBookings.slice(0, 5).map((booking) => (
+                  <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                     <div className="flex items-center space-x-4">
                       <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                         <Calendar className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{appointment.serviceName}</p>
-                        <p className="text-sm text-muted-foreground">{appointment.storeName}</p>
+                        <p className="text-sm font-medium">{booking.service?.name}</p>
+                        <p className="text-sm text-muted-foreground">{booking.store?.name}</p>
                       </div>
                     </div>
                     <div className="text-right space-y-1">
                       <div className="text-sm">
-                        {appointment.date} at {appointment.time}
+                        {formatDate(booking.booking_date)} at {booking.start_time}
                       </div>
-                      <Badge className={getStatusColor(appointment.status)}>
-                        {appointment.status}
+                      <Badge className={getStatusColor(booking.status)}>
+                        {booking.status}
                       </Badge>
                     </div>
                   </div>
@@ -455,4 +670,3 @@ const DashboardPage = () => {
 }
 
 export default DashboardPage
-

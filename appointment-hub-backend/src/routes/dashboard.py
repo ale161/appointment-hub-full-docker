@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from src.models import (
-    db, Booking, BookingStatus, BookingPaymentStatus, Service, Store, User, UserRole, Payment
+    db, Booking, BookingStatus, Service, Store, User, UserRole, Payment, PaymentStatus
 )
 from src.utils.auth import get_current_user, ensure_store_access
 from datetime import datetime, timedelta
@@ -68,7 +68,7 @@ def get_client_stats(user_id, start_date, today):
     total_spent = db.session.query(func.sum(Payment.amount)).filter(
         and_(
             Payment.user_id == user_id,
-            Payment.status == 'succeeded'
+            Payment.status == PaymentStatus.SUCCEEDED
         )
     ).scalar() or 0
     
@@ -135,7 +135,7 @@ def get_store_manager_stats(store_id, start_date, today):
         and_(
             Booking.store_id == store_id,
             Booking.booking_date >= first_day_of_month,
-            Payment.status == 'succeeded'
+            Payment.status == PaymentStatus.SUCCEEDED
         )
     ).scalar() or 0
     
@@ -145,7 +145,7 @@ def get_store_manager_stats(store_id, start_date, today):
             Booking.store_id == store_id,
             Booking.booking_date >= last_month_start,
             Booking.booking_date <= last_month_end,
-            Payment.status == 'succeeded'
+            Payment.status == PaymentStatus.SUCCEEDED
         )
     ).scalar() or 0
     
@@ -243,7 +243,7 @@ def get_admin_stats(start_date, today):
     
     # Total revenue
     total_revenue = db.session.query(func.sum(Payment.amount)).filter(
-        Payment.status == 'succeeded'
+        Payment.status == PaymentStatus.SUCCEEDED
     ).scalar() or 0
     
     # Total users
@@ -274,7 +274,7 @@ def get_admin_stats(start_date, today):
     ).join(Booking, Store.id == Booking.store_id).join(
         Payment, Booking.id == Payment.booking_id
     ).filter(
-        Payment.status == 'succeeded'
+        Payment.status == PaymentStatus.SUCCEEDED
     ).group_by(Store.id, Store.name).order_by(
         func.sum(Payment.amount).desc()
     ).limit(5).all()
@@ -376,7 +376,7 @@ def get_revenue_analytics():
             and_(
                 Booking.booking_date >= start_date,
                 Booking.booking_date <= end_date,
-                Payment.status == 'succeeded'
+                Payment.status == PaymentStatus.SUCCEEDED
             )
         ).group_by(Booking.booking_date).order_by(Booking.booking_date).all()
         

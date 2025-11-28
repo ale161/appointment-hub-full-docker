@@ -91,7 +91,7 @@ check_health() {
     fi
     
     # Check backend
-    if curl -f http://localhost:5000/health > /dev/null 2>&1; then
+    if curl -f http://localhost:5001/health > /dev/null 2>&1; then
         log_success "Backend is healthy"
     else
         log_error "Backend health check failed"
@@ -117,7 +117,7 @@ show_status() {
     echo ""
     log_info "Application URLs:"
     echo "  Frontend: http://localhost"
-    echo "  Backend API: http://localhost:5000"
+    echo "  Backend API: http://localhost:5001"
     echo "  Database: localhost:5432"
     echo ""
     log_info "Demo Accounts:"

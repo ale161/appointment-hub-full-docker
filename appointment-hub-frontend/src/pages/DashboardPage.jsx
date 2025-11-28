@@ -44,21 +44,24 @@ const DashboardPage = () => {
   const fetchDashboardData = async () => {
     try {
       setDashboardData(prev => ({ ...prev, loading: true, error: null }))
+      console.log('Fetching dashboard data...')
       const stats = await dashboardService.getStats(timeRange)
-      
+      console.log('Dashboard stats received:', stats)
+
       setDashboardData({
-        stats: stats,
-        recentBookings: stats.recentBookings || [],
-        popularServices: stats.popularServices || [],
-        topStores: stats.topStores || [],
+        stats: stats || {},
+        recentBookings: stats?.recentBookings || [],
+        popularServices: stats?.popularServices || [],
+        topStores: stats?.topStores || [],
         loading: false,
         error: null
       })
+      console.log('Dashboard data set successfully')
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
-      setDashboardData(prev => ({ 
-        ...prev, 
-        loading: false, 
+      setDashboardData(prev => ({
+        ...prev,
+        loading: false,
         error: error.message || 'Failed to load dashboard data'
       }))
     }
@@ -323,7 +326,7 @@ const DashboardPage = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardData.stats.totalBookings || 0}</div>
+              <div className="text-2xl font-bold">{dashboardData?.stats?.totalBookings || 0}</div>
               <p className="text-xs text-muted-foreground">Across all stores</p>
             </CardContent>
           </Card>
@@ -358,7 +361,7 @@ const DashboardPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Bookings - For Store Managers and Admins */}
-        {(isStoreManager() || isAdmin()) && dashboardData.recentBookings.length > 0 && (
+        {(isStoreManager() || isAdmin()) && dashboardData?.recentBookings?.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -412,7 +415,7 @@ const DashboardPage = () => {
         )}
 
         {/* Popular Services - For Store Managers */}
-        {isStoreManager() && dashboardData.popularServices.length > 0 && (
+        {isStoreManager() && dashboardData?.popularServices?.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -454,7 +457,7 @@ const DashboardPage = () => {
         )}
 
         {/* Top Stores - For Admin */}
-        {isAdmin() && dashboardData.topStores.length > 0 && (
+        {isAdmin() && dashboardData?.topStores?.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -496,7 +499,7 @@ const DashboardPage = () => {
         )}
 
         {/* Recent Bookings - For Clients */}
-        {isClient() && dashboardData.recentBookings.length > 0 && (
+        {isClient() && dashboardData?.recentBookings?.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">

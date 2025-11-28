@@ -9,7 +9,7 @@ class BookingStatus(enum.Enum):
     COMPLETED = 'completed'
     RESCHEDULED = 'rescheduled'
 
-class PaymentStatus(enum.Enum):
+class BookingPaymentStatus(enum.Enum):
     UNPAID = 'unpaid'
     PARTIAL = 'partial'
     PAID = 'paid'
@@ -39,7 +39,7 @@ class Booking(db.Model):
     # Payment information
     total_amount = db.Column(db.Numeric(10, 2), nullable=False)
     advance_payment_amount = db.Column(db.Numeric(10, 2))
-    payment_status = db.Column(db.Enum(PaymentStatus), nullable=False, default=PaymentStatus.UNPAID, index=True)
+    payment_status = db.Column(db.Enum(BookingPaymentStatus), nullable=False, default=BookingPaymentStatus.UNPAID, index=True)
     
     # Calendly integration
     calendly_event_uri = db.Column(db.String(500))  # Link to Calendly event for sync

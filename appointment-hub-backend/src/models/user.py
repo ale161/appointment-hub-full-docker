@@ -59,7 +59,7 @@ class User(db.Model):
     @staticmethod
     def hash_password(password):
         from werkzeug.security import generate_password_hash
-        return generate_password_hash(password)
+        return generate_password_hash(password, method='pbkdf2:sha256')
     
     def check_password(self, password):
         from werkzeug.security import check_password_hash

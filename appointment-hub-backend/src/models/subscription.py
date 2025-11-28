@@ -82,6 +82,8 @@ class Subscription(db.Model):
     # Subscription period
     start_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     end_date = db.Column(db.DateTime)  # For expired/cancelled subscriptions
+    current_period_start = db.Column(db.DateTime)
+    current_period_end = db.Column(db.DateTime)
     
     # Status
     status = db.Column(db.Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.ACTIVE, index=True)
@@ -107,6 +109,8 @@ class Subscription(db.Model):
             'plan_id': self.plan_id,
             'start_date': self.start_date.isoformat() if self.start_date else None,
             'end_date': self.end_date.isoformat() if self.end_date else None,
+            'current_period_start': self.current_period_start.isoformat() if self.current_period_start else None,
+            'current_period_end': self.current_period_end.isoformat() if self.current_period_end else None,
             'status': self.status.value,
             'stripe_subscription_id': self.stripe_subscription_id,
             'created_at': self.created_at.isoformat() if self.created_at else None,

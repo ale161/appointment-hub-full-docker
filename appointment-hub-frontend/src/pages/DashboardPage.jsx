@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import dashboardService from '@/services/dashboardService'
+import NotificationCenter from '@/components/NotificationCenter'
 
 const DashboardPage = () => {
   const { user, isAdmin, isStoreManager, isClient } = useAuth()
@@ -631,6 +632,11 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Notification Center - Full width for all users */}
+      {(isStoreManager() || isAdmin() || isClient()) && (
+        <NotificationCenter />
+      )}
 
       {/* Welcome Message for New Users */}
       {user && !user.last_login && (
